@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Document Generator</title>
+
+    <link rel="stylesheet" href="style.css" />
+  </head>
+
+  <body>
+    <main class="app">
+      <section class="header">
+        <h1>Document Generator</h1>
+        <p>Enter details and generate your document</p>
+      </section>
+
+      <section class="form-card">
+        <div class="field">
+          <label for="name">Name</label>
+          <input
+            type="text"
+            id="name"
+            placeholder="Enter name"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="accountNumber">Account Number</label>
+          <input
+            type="text"
+            id="accountNumber"
+            placeholder="Enter account number"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="cif">CIF Number</label>
+          <input
+            type="text"
+            id="cif"
+            placeholder="Enter CIF number"
+            inputmode="numeric"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="ifsc">IFSC Code</label>
+          <input
+            type="text"
+            id="ifsc"
+            placeholder="Enter IFSC code"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="branch">Branch Name</label>
+          <input
+            type="text"
+            id="branch"
+            placeholder="Enter branch name"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="boName">B.O Name</label>
+          <input
+            type="text"
+            id="boName"
+            placeholder="Enter B.O name"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="accountType">Account Type</label>
+          <input
+            type="text"
+            id="accountType"
+            placeholder="Enter account type"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field">
+          <label for="openingDate">Opening Date</label>
+          <input type="date" id="openingDate" />
+        </div>
+
+        <div class="field qr-field">
+          <label for="qrFile">QR Code</label>
+
+          <input
+            type="file"
+            id="qrFile"
+            accept="image/png,image/jpeg,image/webp"
+          />
+
+          <div id="qrStatus" class="qr-status"></div>
+        </div>
+
+        <button type="button" id="generateBtn" class="generate-btn">
+          Generate PDF
+        </button>
+
+        <div id="message" class="message"></div>
+      </section>
+    </main>
+
+    <!-- PDF Library -->
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+    <!-- Application -->
+    <script src="app.js"></script>
+  </body>
+</html>
