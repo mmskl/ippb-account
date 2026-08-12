@@ -1,19 +1,19 @@
 "use strict";
 
 /* ============================================================
-   PDF-LIB CHECK
+   PDF LIBRARY
    ============================================================ */
 
 if (typeof PDFLib === "undefined") {
   throw new Error(
-    "PDFLib load nahi hua. index.html me pdf-lib script check karo.",
+    "PDFLib load nahi hua. Check karo ki pdf-lib script index.html me load hai.",
   );
 }
 
-const { PDFDocument, StandardFonts, rgb } = PDFLib;
+const { PDFDocument, StandardFonts } = PDFLib;
 
 /* ============================================================
-   DOM
+   DOM ELEMENTS
    ============================================================ */
 
 const generateBtn = document.getElementById("generateBtn");
@@ -22,119 +22,99 @@ const qrStatus = document.getElementById("qrStatus");
 const message = document.getElementById("message");
 
 if (!generateBtn) {
-  throw new Error("generateBtn nahi mila.");
+  throw new Error('Element "generateBtn" nahi mila.');
 }
 
 /* ============================================================
-   PAGE / TEMPLATE
+   PAGE SIZE FROM YOUR NEW PDF
    ============================================================ */
 
-/*
-  PDF size:
-  Width  = 255.12 pt
-  Height = 453.60 pt
-
-  Original PDF labels ke coordinates analyzer se liye gaye hain.
-
-  PyMuPDF:
-      Y = top se
-
-  PDF-Lib:
-      Y = bottom se
-
-  Isliye:
-      PDF-Lib Y = 453.60 - PyMuPDF y1
-*/
+const PAGE_WIDTH = 255.12;
+const PAGE_HEIGHT = 453.6;
 
 /* ============================================================
-   FIELD CONFIG
-   ============================================================ */
+   TEMPLATE FIELD POSITIONS
+   ============================================================
+
+   Original PDF labels:
+
+   Name:-              y1 = 58.76
+   Account Number:-    y1 = 77.36
+   CIF Number:-        y1 = 96.08
+   IFSC Code:-         y1 = 114.80
+   Branch Name:-       y1 = 133.52
+   B.O Name:-          y1 = 152.27
+   Account Type:-      y1 = 170.99
+   Opening Date:-      y1 = 189.71
+
+   PyMuPDF Y = top se
+   PDF-Lib Y = bottom se
+
+   PDF-Lib value Y = PAGE_HEIGHT - y1
+
+============================================================ */
 
 const TEMPLATE = {
-  pageWidth: 255.12,
-
-  pageHeight: 453.6,
-
-  fontSize: 9.96,
-
-  /*
-    Original labels ke right edge ke baad
-    thoda sa gap rakha gaya hai.
-  */
+  fontSize: 11,
 
   fields: {
     name: {
-      x: 47.0,
-      y: 395.84,
-      maxWidth: 142.0,
+      x: 50.0,
+      y: PAGE_HEIGHT - 58.76,
     },
 
     accountNumber: {
-      x: 99.2,
-      y: 377.24,
-      maxWidth: 91.0,
+      x: 102.0,
+      y: PAGE_HEIGHT - 77.36,
     },
 
     cif: {
-      x: 75.6,
-      y: 358.52,
-      maxWidth: 114.0,
+      x: 78.0,
+      y: PAGE_HEIGHT - 96.08,
     },
 
     ifsc: {
-      x: 68.8,
-      y: 339.8,
-      maxWidth: 121.0,
+      x: 71.0,
+      y: PAGE_HEIGHT - 114.8,
     },
 
     branch: {
-      x: 84.5,
-      y: 321.08,
-      maxWidth: 106.0,
+      x: 86.0,
+      y: PAGE_HEIGHT - 133.52,
     },
 
     boName: {
-      x: 66.8,
-      y: 302.33,
-      maxWidth: 124.0,
+      x: 68.0,
+      y: PAGE_HEIGHT - 152.27,
     },
 
     accountType: {
-      x: 83.5,
-      y: 283.61,
-      maxWidth: 107.0,
+      x: 85.0,
+      y: PAGE_HEIGHT - 170.99,
     },
 
     openingDate: {
-      x: 84.5,
-      y: 264.89,
-      maxWidth: 106.0,
+      x: 86.0,
+      y: PAGE_HEIGHT - 189.71,
     },
   },
 
-  /*
-    Actual QR/SCAN box:
+  /* ==========================================================
+     QR POSITION
 
-    PyMuPDF:
-      x = 192.05
-      y = 294.35
-      width = 52.50
-      height = 53.50
-
-    PDF-Lib:
-      y = 105.75
-  */
+     Existing working position retained.
+  ========================================================== */
 
   qr: {
-    x: 196.0,
-    y: 109.5,
-    width: 44.5,
-    height: 45.5,
+    x: 450,
+    y: 100,
+    width: 80,
+    height: 80,
   },
 };
 
 /* ============================================================
-   GET VALUE
+   GET INPUT VALUE
    ============================================================ */
 
 function getValue(id) {
@@ -149,6 +129,7 @@ function getValue(id) {
 
 /* ============================================================
    DATE FORMAT
+   YYYY-MM-DD -> DD-MM-YYYY
    ============================================================ */
 
 function formatDate(value) {
@@ -200,19 +181,12 @@ function getFormData() {
 function validateForm(data) {
   const fields = [
     ["Name", data.name],
-
     ["Account Number", data.accountNumber],
-
     ["CIF Number", data.cif],
-
     ["IFSC Code", data.ifsc],
-
     ["Branch Name", data.branch],
-
-    ["B.O Name", data.boName],
-
+    ["Address", data.boName],
     ["Account Type", data.accountType],
-
     ["Opening Date", data.openingDate],
   ];
 
@@ -224,7 +198,7 @@ function validateForm(data) {
 }
 
 /* ============================================================
-   LOAD TEMPLATE
+   LOAD TEMPLATE PDF
    ============================================================ */
 
 async function loadTemplate() {
@@ -239,13 +213,13 @@ async function loadTemplate() {
   const bytes = await response.arrayBuffer();
 
   if (bytes.byteLength < 5) {
-    throw new Error("Template PDF empty hai.");
+    throw new Error("Template PDF empty ya invalid hai.");
   }
 
   const header = new TextDecoder().decode(bytes.slice(0, 5));
 
   if (header !== "%PDF-") {
-    throw new Error("blank-template.pdf valid PDF nahi hai.");
+    throw new Error("blank-template.pdf actual PDF nahi hai.");
   }
 
   return bytes;
@@ -275,7 +249,7 @@ async function imageToPng(file) {
       image.onload = resolve;
 
       image.onerror = () => {
-        reject(new Error("QR image load nahi ho saki."));
+        reject(new Error("Image load nahi ho saki."));
       };
 
       image.src = objectUrl;
@@ -288,7 +262,6 @@ async function imageToPng(file) {
     const canvas = document.createElement("canvas");
 
     canvas.width = image.naturalWidth;
-
     canvas.height = image.naturalHeight;
 
     const context = canvas.getContext("2d");
@@ -302,7 +275,7 @@ async function imageToPng(file) {
     const blob = await new Promise((resolve, reject) => {
       canvas.toBlob((result) => {
         if (!result) {
-          reject(new Error("PNG conversion failed."));
+          reject(new Error("Image ko PNG me convert nahi kiya ja saka."));
 
           return;
         }
@@ -328,23 +301,21 @@ function drawValue(page, value, position, font) {
 
   page.drawText(String(value), {
     x: position.x,
-
     y: position.y,
-
     size: TEMPLATE.fontSize,
 
+    /*
+       Helvetica normal rakha hai.
+       Pehle HelveticaBold ki wajah se value
+       unnecessarily bold aa rahi thi.
+    */
+
     font: font,
-
-    color: rgb(0, 0, 0),
-
-    maxWidth: position.maxWidth,
-
-    lineHeight: TEMPLATE.fontSize,
   });
 }
 
 /* ============================================================
-   DOWNLOAD
+   DOWNLOAD PDF
    ============================================================ */
 
 function downloadPdf(pdfBytes, filename) {
@@ -357,7 +328,6 @@ function downloadPdf(pdfBytes, filename) {
   const link = document.createElement("a");
 
   link.href = url;
-
   link.download = filename;
 
   document.body.appendChild(link);
@@ -417,17 +387,17 @@ generateBtn.addEventListener("click", async () => {
       message.textContent = "PDF generate ho raha hai...";
     }
 
-    /* -----------------------------------------
-         DATA
-      ----------------------------------------- */
+    /* ======================================================
+         FORM DATA
+      ====================================================== */
 
     const data = getFormData();
 
     validateForm(data);
 
-    /* -----------------------------------------
+    /* ======================================================
          QR IMAGE
-      ----------------------------------------- */
+      ====================================================== */
 
     const imageFile = qrFileInput ? qrFileInput.files[0] : null;
 
@@ -435,15 +405,15 @@ generateBtn.addEventListener("click", async () => {
       throw new Error("QR image select karo.");
     }
 
-    /* -----------------------------------------
-         TEMPLATE
-      ----------------------------------------- */
+    /* ======================================================
+         LOAD TEMPLATE
+      ====================================================== */
 
     const templateBytes = await loadTemplate();
 
-    /* -----------------------------------------
-         PDF
-      ----------------------------------------- */
+    /* ======================================================
+         LOAD PDF
+      ====================================================== */
 
     const pdfDoc = await PDFDocument.load(templateBytes);
 
@@ -455,28 +425,30 @@ generateBtn.addEventListener("click", async () => {
 
     const page = pages[0];
 
-    /* -----------------------------------------
+    /* ======================================================
          FONT
-      ----------------------------------------- */
+
+         Normal Helvetica use kiya hai.
+         Bold nahi.
+      ====================================================== */
 
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    /* -----------------------------------------
-         PAGE DEBUG
-      ----------------------------------------- */
+    /* ======================================================
+         PAGE SIZE CHECK
+      ====================================================== */
 
     const { width, height } = page.getSize();
 
-    console.log("PDF width:", width);
+    console.log("PDF Width:", width);
 
-    console.log("PDF height:", height);
+    console.log("PDF Height:", height);
 
-    /* -----------------------------------------
-         TEXT VALUES ONLY
+    /* ======================================================
+         DRAW VALUES
 
-         Existing PDF labels already hain.
-         Yahan labels dobara draw nahi honge.
-      ----------------------------------------- */
+         Existing PDF labels ko touch nahi karna.
+      ====================================================== */
 
     drawValue(page, data.name, TEMPLATE.fields.name, font);
 
@@ -494,9 +466,9 @@ generateBtn.addEventListener("click", async () => {
 
     drawValue(page, data.openingDate, TEMPLATE.fields.openingDate, font);
 
-    /* -----------------------------------------
-         QR
-      ----------------------------------------- */
+    /* ======================================================
+         QR IMAGE
+      ====================================================== */
 
     const imageBytes = await imageToPng(imageFile);
 
@@ -504,25 +476,22 @@ generateBtn.addEventListener("click", async () => {
 
     page.drawImage(embeddedImage, {
       x: TEMPLATE.qr.x,
-
       y: TEMPLATE.qr.y,
-
       width: TEMPLATE.qr.width,
-
       height: TEMPLATE.qr.height,
     });
 
-    /* -----------------------------------------
+    /* ======================================================
          SAVE
-      ----------------------------------------- */
+      ====================================================== */
 
     const pdfBytes = await pdfDoc.save();
 
-    /* -----------------------------------------
+    /* ======================================================
          DOWNLOAD
-      ----------------------------------------- */
+      ====================================================== */
 
-    downloadPdf(pdfBytes, "generated-account-document.pdf");
+    downloadPdf(pdfBytes, "ippb-account-document.pdf");
 
     if (message) {
       message.textContent = "PDF successfully generated ✓";
